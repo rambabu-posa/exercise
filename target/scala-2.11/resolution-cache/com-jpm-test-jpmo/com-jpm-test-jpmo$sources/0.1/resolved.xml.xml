@@ -4,7 +4,7 @@
 		module="com-jpm-test-jpmo$sources"
 		revision="0.1"
 		status="integration"
-		publication="20190204170141"
+		publication="20190205204207"
 	/>
 	<configurations>
 		<conf name="compile" visibility="public" description=""/>

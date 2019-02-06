@@ -4,9 +4,11 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.collection.mutable.ListBuffer
 import collection.JavaConversions._
 
-case class AppConfig(countryConfig: CountryConfig, schemaConf: List[List[String]],ignoredSymbols:List[String])
+case class AppConfig(countryConfig: CountryConfig, schemaConf: List[List[String]],ignoredSymbols:List[String],defaultsConfig:DefaultsConfig)
 
 case class CountryConfig(names: String, prefix: String, postfix: String)
+
+case class DefaultsConfig(int: String, float: String, string: String)
 
 object AppConfig {
 
@@ -20,6 +22,7 @@ object AppConfig {
         countryConf.getString("prefix"),
         countryConf.getString("postfix"))
     }
+
 
 
     val schemaConf: List[List[String]] = {
@@ -38,6 +41,16 @@ object AppConfig {
       val ignoredSymbolConf = conf.getConfig("ignored-symbols")
       ignoredSymbolConf.getStringList("symbols").toList
     }
-    AppConfig(countryConfig, schemaConf,ignoredSymbols)
+
+
+    val defaultsConfig: DefaultsConfig = {
+      val countryConf = conf.getConfig("defaults")
+      DefaultsConfig(
+        countryConf.getString("int"),
+        countryConf.getString("float"),
+        countryConf.getString("string"))
+    }
+
+    AppConfig(countryConfig, schemaConf,ignoredSymbols,defaultsConfig)
   }
 }
