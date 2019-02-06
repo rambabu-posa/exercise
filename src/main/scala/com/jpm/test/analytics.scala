@@ -56,13 +56,13 @@ object analytics {
   }
 
   def worstRainfall(df:DataFrame):Unit = {
-    val broadcastDf = broadcast(df.groupBy("country").agg(max("rain").alias("maxRain")))
+    val broadcastDf = broadcast(df.groupBy("country").agg(max("rain").alias("maxRain")).toDF("countryName","maxRain"))
     df.join(broadcast(broadcastDf),df("country")===broadcastDf("country") && df("rain") === broadcastDf("maxRain")).show()
   }
 
   def bestSunshinefall(df:DataFrame):Unit = {
-    val groupedDf = df.groupBy("country").agg(max("sunshine").alias("maxSunshine"))
-    df.join(groupedDf,df("country")===groupedDf("country") && df("sunshine") === groupedDf("maxSunshine")).show()
+    val broadcastDf = broadcast(df.groupBy("country").agg(max("sunshine").alias("maxSunshine")).toDF("countryName","maxRain"))
+    df.join(broadcastDf,df("country")===broadcastDf("country") && df("sunshine") === broadcastDf("maxSunshine")).show()
   }
 
   def averagesAcrossMay(df:DataFrame,defaults:DefaultsConfig):Unit = {

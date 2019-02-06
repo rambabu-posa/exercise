@@ -42,14 +42,14 @@ object Jpmo extends App {
 
   })
   println(df.count)
-  df.show(10)
+  //df.show(10)
   println(s"countries : $countryNames")
   //analytics.rankStationsByOnline(df,schemaConf,defaults)
   //analytics.rankStationsByRainfall(df,defaults)
   //analytics.rankStationsBySunshine(df,defaults)
-  //analytics.worstRainfall(df)
+  analytics.worstRainfall(df)
   //analytics.bestSunshinefall(df)
-  analytics.averagesAcrossMay(df,defaults)
+  //analytics.averagesAcrossMay(df,defaults)
 
 
   // val html = scala.io.Source.fromURL("https://www.metoffice.gov.uk/pub/data/weather/uk/climate/stationdata/leucharsdata.txt").mkString
