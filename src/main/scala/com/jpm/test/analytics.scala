@@ -2,7 +2,7 @@ package com.jpm.test
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions.{desc,sum,max}
+import org.apache.spark.sql.functions.{desc,sum,max,avg}
 object analytics {
   private def checkOnline(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
     var metricsCount = 0
@@ -40,6 +40,21 @@ object analytics {
   }
 
   def worstRainfall(df:DataFrame):Unit = {
+    val groupedDf = df.groupBy("country").agg(max("rain").alias("maxRain"))
+    df.join(groupedDf,df("country")===groupedDf("country") && df("rain") === groupedDf("maxRain")).show()
+  }
+
+  def bestSunshinefall(df:DataFrame):Unit = {
+    val groupedDf = df.groupBy("country").agg(max("sunshine").alias("maxSunshine"))
+    df.join(groupedDf,df("country")===groupedDf("country") && df("sunshine") === groupedDf("maxSunshine")).show()
+  }
+
+  def averagesAcrossMay(df:DataFrame,defaults:DefaultsConfig):Unit = {
+    df.filter("month = 5" ).filter(s"sunshine!=${defaults.float}").groupBy("country").agg(avg("sunshine").alias("avgSunshine")).show
+    df.filter("month = 5" ).filter(s"rain!=${defaults.float}").groupBy("country").agg(avg("rain").alias("avgRain"),avg("sunshine").alias("avgSunshine")).show
+  }
+
+  def bestRainfall(df:DataFrame):Unit = {
     val groupedDf = df.groupBy("country").agg(max("rain").alias("maxRain"))
     df.join(groupedDf,df("country")===groupedDf("country") && df("rain") === groupedDf("maxRain")).show()
   }
