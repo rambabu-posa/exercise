@@ -5,9 +5,23 @@ import com.jpm.test.Jpmo.schema
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{avg, broadcast, desc, max, min, sum}
+import org.apache.spark.sql.functions.{avg, broadcast, desc, max, min, sum, row_number,col,concat_ws,collect_list}
 object analytics {
 
+  def printfunc(df:DataFrame) = {
+
+    val fos = new FileOutputStream(new File("output/results2.txt"))
+    Console.withOut(fos) {
+     df.show
+    }
+  }
+
+  def getDefault(colType:String,defaults:DefaultsConfig ) = colType match {
+    case  "Int" => defaults.int
+    case "Double" => defaults.float
+    case _ => defaults.string
+  }
+  // helps to rank stations online by number of measures.
   private def checkOnline(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
     var metricsCount = 0
     (2 until schemaConf.length).map(index => {
@@ -19,6 +33,8 @@ object analytics {
     })
     row.getString(0)->metricsCount
   }
+
+  // helps to rank stations online by number of measures by .
   private def checkOnlinePerMonth(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
     var metricsCount = 0
     (2 until schemaConf.length).map(index => {
@@ -30,6 +46,9 @@ object analytics {
     })
     row.getString(0)->metricsCount
   }
+
+
+  // This is not used as implementations is changed
   private def cleanDefaults(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
     var returnData = List[Any](row.getString(0))
     (0 until schemaConf.length).map(index => {
@@ -42,51 +61,83 @@ object analytics {
     println(returnData)
     returnData
   }
-  //private def checkRainfall(row:Row,schemaConf: List[List[String]]) ={
-  //  var metricsCount = 0
-  //  val rainfallInder= for (i <- (0 until schemaConf.length) if(schemaConf(i)(0) == "rain")) i
-  //
-  //  (2 until schemaConf.length).map(index => {
-  //    schemaConf(index)(1) match {
-  //    }
-  //  })
-  //  row.getString(0)->metricsCount
-  //}
 
+  // this returns max aggregated value
+
+  // Solution for problem 4 with respect to high sunshine
+  def aggColumn(df:DataFrame,colName:String,defaultVal:String,aggregator:String) = {
+    import df.sqlContext.implicits._
+
+    val ldf = df.filter(s"$colName!=$defaultVal")
+    aggregator match {
+      case "max" =>
+        ldf.withColumn ("max", max (colName).over (Window.partitionBy ($"country") ) ).filter(s"$colName=max")
+      case "min" =>
+        ldf.withColumn ("min", min (colName).over (Window.partitionBy ($"country") ) ).filter(s"$colName=min")
+      case _ =>
+        ldf.withColumn ("avg", avg (colName).over (Window.partitionBy ($"country") ) )
+    }
+  }
+
+  // Solution for problem 1 with respect to number of measures
   def rankStationsByOnline(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ):Unit = {
     import df.sqlContext.implicits._
-      df.map(x => checkOnline(x, schemaConf, defaults)).rdd.reduceByKey(_ + _).toDF("Country", "MetricsCount").sort(desc("MetricsCount")).coalesce(1).rdd.saveAsTextFile("output/res1")
+
+    df.map(x => checkOnline(x, schemaConf, defaults))
+      .rdd.reduceByKey(_ + _)
+      .toDF("country", "metricsCount")
+      .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"metricsCount".desc)))
+      .select("rank","country","metricsCount")
+      .show
   }
 
+  // Solution for problem 1 with respect to measures presence per month
   def rankStationsByOnlinePerMonth(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ):Unit = {
     import df.sqlContext.implicits._
-    df.map(x => checkOnline(x, schemaConf, defaults)).rdd.reduceByKey(_ + _).toDF("Country","MetricsCount").sort(desc("MetricsCount")).show()
+
+    df.map(x => checkOnlinePerMonth(x, schemaConf, defaults))
+      .rdd.reduceByKey(_ + _)
+      .toDF("country","metricsCount")
+      .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"metricsCount".desc)))
+      .select("rank","country","metricsCount")
+      .show
   }
 
+  // Solution for problem 2 with respect to  high rainfall
   def rankStationsByRainfall(df:DataFrame,defaults:DefaultsConfig):Unit = {
-    df.filter(s"rain!=${defaults.float}").groupBy("country").agg(sum("rain").alias("rainfall")).sort(desc("rainfall")).show()
+    import df.sqlContext.implicits._
+
+    df.filter(s"rain!=${defaults.float}")
+      .groupBy("country").agg(avg("rain").alias("avgRain"))
+      .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"avgRain".desc)))
+      .select("rank","country","avgRain")
+      .show
   }
 
+  // Solution for problem 2 with respect to high sunshine
   def rankStationsBySunshine(df:DataFrame,defaults:DefaultsConfig):Unit = {
-    df.filter(s"sunshine!=${defaults.float}").groupBy("country").agg(sum("sunshine").alias("sunshine")).sort(desc("sunshine")).show()
+    aggColumn(df,"sunshine",defaults.float,"max").select("country","year","month","max").show
   }
 
-  def worstRainfall(df:DataFrame):Unit = {
-    val fos = new FileOutputStream(new File("output/results2.txt"))
-    Console.withOut(fos) {
-      val broadcastDf = broadcast(df.groupBy("country").agg(max("rain").alias("maxRain")).toDF("countryName", "maxRain"))
-      df.join(broadcast(broadcastDf), df("country") === broadcastDf("countryName") && df("rain") === broadcastDf("maxRain")).select("country", "year", "month", "maxRain").show()
-
-    }
+  // Solution for problem 4 with respect to high sunshine
+  def worstRainfall(df:DataFrame,defaults:DefaultsConfig):Unit = {
+    aggColumn(df,"rain",defaults.float,"max").select("country","year","month","max").show
   }
 
-  def bestSunshinefall(df:DataFrame):Unit = {
-    val fos = new FileOutputStream(new File("results3.txt"))
-    Console.withOut(fos) {
-      val broadcastDf = broadcast(df.groupBy("country").agg(max("sunshine").alias("maxSunshine")).toDF("countryName", "maxSunshine"))
-      df.join(broadcastDf, df("country") === broadcastDf("countryName") && df("sunshine") === broadcastDf("maxSunshine")).select("country", "year", "month", "maxSunshine").show()
+  // Solution for problem 4 with respect to high sunshine
+  def avgRainfall(df:DataFrame,defaults:DefaultsConfig):Unit = {
+    aggColumn(df,"sunshine",defaults.float,"avg").select("country","year","month","avg").show
+  }
 
-    }
+
+  def bestSunshinefall(df:DataFrame,defaults:DefaultsConfig):Unit = {
+    import df.sqlContext.implicits._
+
+    df.filter(s"sunshine!=${defaults.float}")
+      .withColumn("bestSunshine", max("sunshine").over(Window.partitionBy($"country")))
+      .filter("sunshine=bestSunshine")
+      .select("country","year","month","bestSunshine")
+      .show
   }
 
   def averagesAcrossSun(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
@@ -112,15 +163,6 @@ object analytics {
   }
 
 
-  def bestSunshinefallWindow(df:DataFrame):Unit = {
-    val w = Window.partitionBy("country")
-    val fos = new FileOutputStream(new File("results4.txt"))
-    Console.withOut(fos) {
-      val df2 = df.withColumn("maxSunshine", max("sunshine").over(w))
-        .filter("maxSunshine=sunshine")
-      df2.show()
-    }
-  }
 
   def avgWindow(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
     val w = Window.partitionBy("country")
@@ -133,4 +175,27 @@ object analytics {
     }
   }
 
+
+  def yearWiseMetrics(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig) = {
+    var itrDf = df.select("country").distinct()
+    List("avg","min","max").foreach( agg =>
+    (2 until schemaConf.length).map(index => {
+
+      val year = schemaConf(index)(0)+s"_${agg}_year"
+      val aggr = schemaConf(index)(0)+s"_${agg}_value"
+
+      val metricDf =
+        (if(agg == "avg"){
+          aggColumn(df, schemaConf(index)(0), getDefault(schemaConf(index)(1), defaults), agg).selectExpr("country cntry",s"$agg $aggr").distinct()
+        }
+        else {
+          var tempDf = aggColumn(df, schemaConf(index)(0), getDefault(schemaConf(index)(1), defaults), agg).selectExpr("country cntry", s"cast(year as String) ${year}", s"$agg $aggr")
+          (if (tempDf.count() > 1) tempDf.groupBy("cntry", s"$aggr").agg(concat_ws(" ", collect_list(year)) as year) else tempDf)
+        })
+      itrDf = itrDf.join(broadcast(metricDf),col("country") === col("cntry")).drop("cntry")
+
+    }
+    ))
+    itrDf.show
+  }
 }
