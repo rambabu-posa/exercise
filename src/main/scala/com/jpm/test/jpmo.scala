@@ -47,12 +47,9 @@ object Jpmo extends App {
   //analytics.rankStationsByOnline(df,schemaConf,defaults)
   //analytics.rankStationsByRainfall(df,defaults)
   //analytics.rankStationsBySunshine(df,defaults)
-  analytics.worstRainfall(df)
+  //analytics.worstRainfall(df)
   //analytics.bestSunshinefall(df)
-  //analytics.averagesAcrossMay(df,defaults)
+  analytics.averagesAcrossMay(df,schemaConf,defaults)
 
-
-  // val html = scala.io.Source.fromURL("https://www.metoffice.gov.uk/pub/data/weather/uk/climate/stationdata/leucharsdata.txt").mkString
-  // val list = html.split("\n").filter(_ != "")
 
 }

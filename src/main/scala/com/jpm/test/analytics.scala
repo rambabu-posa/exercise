@@ -1,9 +1,12 @@
 package com.jpm.test
+import java.io.{File, FileOutputStream}
 
+import com.jpm.test.Jpmo.schema
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions.{desc,sum,max,avg,broadcast}
+import org.apache.spark.sql.functions.{avg, broadcast, desc, max, sum}
 object analytics {
+
   private def checkOnline(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
     var metricsCount = 0
     (2 until schemaConf.length).map(index => {
@@ -26,6 +29,18 @@ object analytics {
     })
     row.getString(0)->metricsCount
   }
+  private def cleanDefaults(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
+    var returnData = List[Any](row.getString(0))
+    (0 until schemaConf.length).map(index => {
+      schemaConf(index)(1) match {
+        case "Int" => returnData = returnData:+ (if(row.getInt(index+1) != defaults.int.toInt) row.getInt(index+1) else 0)
+        case "Double" => returnData = returnData:+ (if(row.getDouble(index+1) != defaults.float.toDouble) row.getDouble(index+1) else 0.0)
+        case _ => returnData = returnData:+ (if(row.getString(index+1) != defaults.string) row.getString(index+1) else "")
+      }
+    })
+    println(returnData)
+    returnData
+  }
   //private def checkRainfall(row:Row,schemaConf: List[List[String]]) ={
   //  var metricsCount = 0
   //  val rainfallInder= for (i <- (0 until schemaConf.length) if(schemaConf(i)(0) == "rain")) i
@@ -39,7 +54,7 @@ object analytics {
 
   def rankStationsByOnline(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ):Unit = {
     import df.sqlContext.implicits._
-    df.map(x => checkOnline(x, schemaConf, defaults)).rdd.reduceByKey(_ + _).toDF("Country","MetricsCount").sort(desc("MetricsCount")).show()
+      df.map(x => checkOnline(x, schemaConf, defaults)).rdd.reduceByKey(_ + _).toDF("Country", "MetricsCount").sort(desc("MetricsCount")).coalesce(1).rdd.saveAsTextFile("output/res1")
   }
 
   def rankStationsByOnlinePerMonth(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ):Unit = {
@@ -56,18 +71,29 @@ object analytics {
   }
 
   def worstRainfall(df:DataFrame):Unit = {
-    val broadcastDf = broadcast(df.groupBy("country").agg(max("rain").alias("maxRain")).toDF("countryName","maxRain"))
-    df.join(broadcast(broadcastDf),df("country")===broadcastDf("country") && df("rain") === broadcastDf("maxRain")).show()
+    val fos = new FileOutputStream(new File("output/results2.txt"))
+    Console.withOut(fos) {
+      val broadcastDf = broadcast(df.groupBy("country").agg(max("rain").alias("maxRain")).toDF("countryName", "maxRain"))
+      df.join(broadcast(broadcastDf), df("country") === broadcastDf("countryName") && df("rain") === broadcastDf("maxRain")).select("country", "year", "month", "maxRain").show()
+
+    }
   }
 
   def bestSunshinefall(df:DataFrame):Unit = {
-    val broadcastDf = broadcast(df.groupBy("country").agg(max("sunshine").alias("maxSunshine")).toDF("countryName","maxRain"))
-    df.join(broadcastDf,df("country")===broadcastDf("country") && df("sunshine") === broadcastDf("maxSunshine")).show()
+    val fos = new FileOutputStream(new File("output/results3.txt"))
+    Console.withOut(fos) {
+      val broadcastDf = broadcast(df.groupBy("country").agg(max("sunshine").alias("maxSunshine")).toDF("countryName", "maxSunshine"))
+      df.join(broadcastDf, df("country") === broadcastDf("countryName") && df("sunshine") === broadcastDf("maxSunshine")).select("country", "year", "month", "maxSunshine").show()
+
+    }
   }
 
-  def averagesAcrossMay(df:DataFrame,defaults:DefaultsConfig):Unit = {
-    df.filter("month = 5" ).filter(s"sunshine!=${defaults.float}").groupBy("country").agg(avg("sunshine").alias("avgSunshine")).show
-    df.filter("month = 5" ).filter(s"rain!=${defaults.float}").groupBy("country").agg(avg("rain").alias("avgRain"),avg("sunshine").alias("avgSunshine")).show
+  def averagesAcrossMay(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
+    import df.sqlContext.implicits._
+    val fos = new FileOutputStream(new File("output/results5.txt"))
+    Console.withOut(fos) {
+      df.sqlContext.createDataFrame(df.filter("month = 4").rdd.map(cleanDefaults(_, schemaConf, defaults)).map(Row(_:_*)),schema).groupBy("country").agg(avg("tmax").alias("avgtmax"), avg("tmin").alias("avgtmin"), avg("af_days").alias("avgaf_days"), avg("rain").alias("avgRain"), avg("sunshine").alias("avgSunshine")).show
+    }
   }
 
   def bestRainfall(df:DataFrame):Unit = {
