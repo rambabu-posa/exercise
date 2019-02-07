@@ -49,7 +49,10 @@ object Jpmo extends App {
   //analytics.rankStationsBySunshine(df,defaults)
   //analytics.worstRainfall(df)
   //analytics.bestSunshinefall(df)
-  analytics.averagesAcrossMay(df,schemaConf,defaults)
+  //analytics.bestSunshinefallWindow(df)
+  //analytics.averagesAcrossMay(df,schemaConf,defaults)
+  //analytics.avgWindow(df,schemaConf,defaults)
+  analytics.averagesAcrossSun(df,schemaConf,defaults)
 
 
 }

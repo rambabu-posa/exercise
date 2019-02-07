@@ -4,7 +4,8 @@ import java.io.{File, FileOutputStream}
 import com.jpm.test.Jpmo.schema
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions.{avg, broadcast, desc, max, sum}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.{avg, broadcast, desc, max, min, sum}
 object analytics {
 
   private def checkOnline(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
@@ -80,11 +81,20 @@ object analytics {
   }
 
   def bestSunshinefall(df:DataFrame):Unit = {
-    val fos = new FileOutputStream(new File("output/results3.txt"))
+    val fos = new FileOutputStream(new File("results3.txt"))
     Console.withOut(fos) {
       val broadcastDf = broadcast(df.groupBy("country").agg(max("sunshine").alias("maxSunshine")).toDF("countryName", "maxSunshine"))
       df.join(broadcastDf, df("country") === broadcastDf("countryName") && df("sunshine") === broadcastDf("maxSunshine")).select("country", "year", "month", "maxSunshine").show()
 
+    }
+  }
+
+  def averagesAcrossSun(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
+    import df.sqlContext.implicits._
+    val fos = new FileOutputStream(new File("results7.txt"))
+    Console.withOut(fos) {
+      df.filter(s"sunshine!=${defaults.float}").groupBy("country").agg(avg("sunshine").alias("avgsunshine")).show
+      //df.sqlContext.createDataFrame(df.filter("month = 4").rdd.map(cleanDefaults(_, schemaConf, defaults)).map(Row(_:_*)),schema).groupBy("country").agg(avg("tmax").alias("avgtmax"), avg("tmin").alias("avgtmin"), avg("af_days").alias("avgaf_days"), avg("rain").alias("avgRain"), avg("sunshine").alias("avgSunshine")).show
     }
   }
 
@@ -100,4 +110,27 @@ object analytics {
     val groupedDf = df.groupBy("country").agg(max("rain").alias("maxRain"))
     df.join(groupedDf,df("country")===groupedDf("country") && df("rain") === groupedDf("maxRain")).show()
   }
+
+
+  def bestSunshinefallWindow(df:DataFrame):Unit = {
+    val w = Window.partitionBy("country")
+    val fos = new FileOutputStream(new File("results4.txt"))
+    Console.withOut(fos) {
+      val df2 = df.withColumn("maxSunshine", max("sunshine").over(w))
+        .filter("maxSunshine=sunshine")
+      df2.show()
+    }
+  }
+
+  def avgWindow(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
+    val w = Window.partitionBy("country")
+    import df.sqlContext.implicits._
+    val fos = new FileOutputStream(new File("results4.txt"))
+    Console.withOut(fos) {
+      val df2 = df.sqlContext.createDataFrame(df.filter("month = 4").rdd.map(cleanDefaults(_, schemaConf, defaults)).map(Row(_:_*)),schema).withColumn("maxSunshine", max("sunshine").over(w))
+        .withColumn("minSunshine", min("sunshine").over(w)).filter("maxSunshine=sunshine or minSunshine=sunshine")
+      df2.show()
+    }
+  }
+
 }
