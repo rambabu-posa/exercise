@@ -44,13 +44,13 @@ object Jpmo extends App {
   })
   df.cache()
   println(s"countries : $countryNames")
-  analytics.rankStationsByOnline(df, schemaConf, defaults).printData("rankStationsByOnline")
-  analytics.rankStationsByOnlinePerMonth(df,schemaConf,defaults).printData("rankStationsByOnlinePerMonth")
-  analytics.rankStationsByRainfall(df,defaults).printData("rankStationsByRainfall")
-  analytics.rankStationsBySunshine(df,defaults).printData("rankStationsBySunshine")
-  analytics.worstRainfall(df,defaults).printData("worstRainfall")
-  analytics.bestSunshine(df,defaults).printData("bestSunshine")
-  analytics.yearWiseMetrics(df.filter("year=5"),schemaConf,defaults).printData("yearWiseMetrics")
+  Analytics.rankStationsByOnline(df, schemaConf, defaults).printData("rankStationsByOnline")
+  Analytics.rankStationsByOnlinePerMonth(df,schemaConf,defaults).printData("rankStationsByOnlinePerMonth")
+  Analytics.rankStationsByRainfall(df,defaults).printData("rankStationsByRainfall")
+  Analytics.rankStationsBySunshine(df,defaults).printData("rankStationsBySunshine")
+  Analytics.worstRainfall(df,defaults).printData("worstRainfall")
+  Analytics.bestSunshine(df,defaults).printData("bestSunshine")
+  Analytics.yearWiseMetrics(df.filter("year=5"),schemaConf,defaults).printData("yearWiseMetrics")
 
 } catch {
   case ex:Exception=>

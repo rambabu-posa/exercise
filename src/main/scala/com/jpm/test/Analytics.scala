@@ -5,7 +5,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{avg, broadcast, desc, max, min, sum, row_number,col,concat_ws,collect_list}
-object analytics {
+object Analytics {
 
 
   def getDefault(colType:String,defaults:DefaultsConfig ) = colType match {
