@@ -8,6 +8,7 @@ import util.JpmTestUtils._
 
 object Jpmo extends App {
 
+  // get Configs from config file
   val config: AppConfig = AppConfig()
   val countryNames = config.countryConfig.names
   val prefix = config.countryConfig.prefix
@@ -28,6 +29,7 @@ object Jpmo extends App {
 
   var df = spark.createDataFrame(spark.sqlContext.sparkContext.emptyRDD[Row], schema)
 
+  // Creating dataframe with online data which includes country column
   val countryList = countryNames.map(_.trim).map(country => {
     val rows = scala.io.Source.fromURL(prefix + country + postfix)
       .mkString
@@ -43,7 +45,8 @@ object Jpmo extends App {
 
   })
   df.cache()
-  println(s"countries : $countryNames")
+
+  // calling and printing analytic data
   Analytics.rankStationsByOnline(df, schemaConf, defaults).printData("rankStationsByOnline")
   Analytics.rankStationsByOnlinePerMonth(df,schemaConf,defaults).printData("rankStationsByOnlinePerMonth")
   Analytics.rankStationsByRainfall(df,defaults).printData("rankStationsByRainfall")
