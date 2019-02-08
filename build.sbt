@@ -1,4 +1,4 @@
-name := "com.jpm.test.jpmo"
+name := "com.jpm.test.Jpmo"
 
 version := "0.1"
 

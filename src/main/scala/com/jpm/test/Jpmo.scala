@@ -1,10 +1,8 @@
 package com.jpm.test
 
-import org.apache.spark.sql._
-import org.apache.spark.sql.types.{
-  StructType, StructField, StringType}
-import org.apache.spark.sql.Row
-import util.JpmTestUtils._
+import com.jpm.test.util.JpmTestUtils._
+import org.apache.spark.sql.{Row, _}
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 object Jpmo extends App {
 
@@ -53,7 +51,7 @@ object Jpmo extends App {
   Analytics.rankStationsBySunshine(df,defaults).printData("rankStationsBySunshine")
   Analytics.worstRainfall(df,defaults).printData("worstRainfall")
   Analytics.bestSunshine(df,defaults).printData("bestSunshine")
-  Analytics.yearWiseMetrics(df.filter("year=5"),schemaConf,defaults).printData("yearWiseMetrics")
+  Analytics.yearWiseMetrics(df.filter("month=5"),schemaConf,defaults).printData("yearWiseMetrics")
 
 } catch {
   case ex:Exception=>

@@ -1,9 +1,9 @@
 package com.jpm.test
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{avg, broadcast, desc, max, min, sum, row_number,col,concat_ws,collect_list}
+import org.apache.spark.sql.functions._
+
 object Analytics {
 
 
