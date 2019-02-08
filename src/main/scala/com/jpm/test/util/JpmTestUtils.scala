@@ -6,7 +6,7 @@ import com.jpm.test.Jpmo.{defaults, ignoreSymbols, schemaConf, printOption}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType}
 
-object jpm_test_utils {
+object JpmTestUtils {
 
   def inferType(field: String) = field match {
     case "Int" => IntegerType

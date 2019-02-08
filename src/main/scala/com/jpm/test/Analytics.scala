@@ -1,5 +1,4 @@
 package com.jpm.test
-import java.io.{File, FileOutputStream}
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row

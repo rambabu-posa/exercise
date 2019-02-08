@@ -4,7 +4,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.types.{
   StructType, StructField, StringType}
 import org.apache.spark.sql.Row
-import util.jpm_test_utils._
+import util.JpmTestUtils._
 
 object Jpmo extends App {
 
