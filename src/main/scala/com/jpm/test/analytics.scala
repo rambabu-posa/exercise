@@ -1,20 +1,12 @@
 package com.jpm.test
 import java.io.{File, FileOutputStream}
 
-import com.jpm.test.Jpmo.schema
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{avg, broadcast, desc, max, min, sum, row_number,col,concat_ws,collect_list}
 object analytics {
 
-  def printfunc(df:DataFrame) = {
-
-    val fos = new FileOutputStream(new File("output/results2.txt"))
-    Console.withOut(fos) {
-     df.show
-    }
-  }
 
   def getDefault(colType:String,defaults:DefaultsConfig ) = colType match {
     case  "Int" => defaults.int
@@ -47,24 +39,7 @@ object analytics {
     row.getString(0)->metricsCount
   }
 
-
-  // This is not used as implementations is changed
-  private def cleanDefaults(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
-    var returnData = List[Any](row.getString(0))
-    (0 until schemaConf.length).map(index => {
-      schemaConf(index)(1) match {
-        case "Int" => returnData = returnData:+ (if(row.getInt(index+1) != defaults.int.toInt) row.getInt(index+1) else 0)
-        case "Double" => returnData = returnData:+ (if(row.getDouble(index+1) != defaults.float.toDouble) row.getDouble(index+1) else 0.0)
-        case _ => returnData = returnData:+ (if(row.getString(index+1) != defaults.string) row.getString(index+1) else "")
-      }
-    })
-    println(returnData)
-    returnData
-  }
-
-  // this returns max aggregated value
-
-  // Solution for problem 4 with respect to high sunshine
+  // returns aggregated values
   def aggColumn(df:DataFrame,colName:String,defaultVal:String,aggregator:String) = {
     import df.sqlContext.implicits._
 
@@ -80,7 +55,7 @@ object analytics {
   }
 
   // Solution for problem 1 with respect to number of measures
-  def rankStationsByOnline(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ):Unit = {
+  def rankStationsByOnline(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ) = {
     import df.sqlContext.implicits._
 
     df.map(x => checkOnline(x, schemaConf, defaults))
@@ -88,11 +63,10 @@ object analytics {
       .toDF("country", "metricsCount")
       .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"metricsCount".desc)))
       .select("rank","country","metricsCount")
-      .show
   }
 
   // Solution for problem 1 with respect to measures presence per month
-  def rankStationsByOnlinePerMonth(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ):Unit = {
+  def rankStationsByOnlinePerMonth(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig ) = {
     import df.sqlContext.implicits._
 
     df.map(x => checkOnlinePerMonth(x, schemaConf, defaults))
@@ -100,82 +74,38 @@ object analytics {
       .toDF("country","metricsCount")
       .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"metricsCount".desc)))
       .select("rank","country","metricsCount")
-      .show
   }
 
   // Solution for problem 2 with respect to  high rainfall
-  def rankStationsByRainfall(df:DataFrame,defaults:DefaultsConfig):Unit = {
+  def rankStationsByRainfall(df:DataFrame,defaults:DefaultsConfig) = {
     import df.sqlContext.implicits._
 
     df.filter(s"rain!=${defaults.float}")
       .groupBy("country").agg(avg("rain").alias("avgRain"))
       .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"avgRain".desc)))
       .select("rank","country","avgRain")
-      .show
   }
 
   // Solution for problem 2 with respect to high sunshine
-  def rankStationsBySunshine(df:DataFrame,defaults:DefaultsConfig):Unit = {
-    aggColumn(df,"sunshine",defaults.float,"max").select("country","year","month","max").show
-  }
-
-  // Solution for problem 4 with respect to high sunshine
-  def worstRainfall(df:DataFrame,defaults:DefaultsConfig):Unit = {
-    aggColumn(df,"rain",defaults.float,"max").select("country","year","month","max").show
-  }
-
-  // Solution for problem 4 with respect to high sunshine
-  def avgRainfall(df:DataFrame,defaults:DefaultsConfig):Unit = {
-    aggColumn(df,"sunshine",defaults.float,"avg").select("country","year","month","avg").show
-  }
-
-
-  def bestSunshinefall(df:DataFrame,defaults:DefaultsConfig):Unit = {
+  def rankStationsBySunshine(df:DataFrame,defaults:DefaultsConfig) = {
     import df.sqlContext.implicits._
 
     df.filter(s"sunshine!=${defaults.float}")
-      .withColumn("bestSunshine", max("sunshine").over(Window.partitionBy($"country")))
-      .filter("sunshine=bestSunshine")
-      .select("country","year","month","bestSunshine")
-      .show
+      .groupBy("country").agg(avg("sunshine").alias("avgSunshine"))
+      .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"avgSunshine".desc)))
   }
 
-  def averagesAcrossSun(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
-    import df.sqlContext.implicits._
-    val fos = new FileOutputStream(new File("results7.txt"))
-    Console.withOut(fos) {
-      df.filter(s"sunshine!=${defaults.float}").groupBy("country").agg(avg("sunshine").alias("avgsunshine")).show
-      //df.sqlContext.createDataFrame(df.filter("month = 4").rdd.map(cleanDefaults(_, schemaConf, defaults)).map(Row(_:_*)),schema).groupBy("country").agg(avg("tmax").alias("avgtmax"), avg("tmin").alias("avgtmin"), avg("af_days").alias("avgaf_days"), avg("rain").alias("avgRain"), avg("sunshine").alias("avgSunshine")).show
-    }
+  // Solution for problem 4 with respect to high rain
+  def worstRainfall(df:DataFrame,defaults:DefaultsConfig) = {
+    aggColumn(df,"rain",defaults.float,"max").select("country","year","month","max")
   }
 
-  def averagesAcrossMay(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
-    import df.sqlContext.implicits._
-    val fos = new FileOutputStream(new File("output/results5.txt"))
-    Console.withOut(fos) {
-      df.sqlContext.createDataFrame(df.filter("month = 4").rdd.map(cleanDefaults(_, schemaConf, defaults)).map(Row(_:_*)),schema).groupBy("country").agg(avg("tmax").alias("avgtmax"), avg("tmin").alias("avgtmin"), avg("af_days").alias("avgaf_days"), avg("rain").alias("avgRain"), avg("sunshine").alias("avgSunshine")).show
-    }
+  // Solution for problem 4 with respect to high sun hours
+  def bestSunshine(df:DataFrame,defaults:DefaultsConfig) = {
+    aggColumn(df,"sunshine",defaults.float,"max").select("country","year","month","max")
   }
 
-  def bestRainfall(df:DataFrame):Unit = {
-    val groupedDf = df.groupBy("country").agg(max("rain").alias("maxRain"))
-    df.join(groupedDf,df("country")===groupedDf("country") && df("rain") === groupedDf("maxRain")).show()
-  }
-
-
-
-  def avgWindow(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig):Unit = {
-    val w = Window.partitionBy("country")
-    import df.sqlContext.implicits._
-    val fos = new FileOutputStream(new File("results4.txt"))
-    Console.withOut(fos) {
-      val df2 = df.sqlContext.createDataFrame(df.filter("month = 4").rdd.map(cleanDefaults(_, schemaConf, defaults)).map(Row(_:_*)),schema).withColumn("maxSunshine", max("sunshine").over(w))
-        .withColumn("minSunshine", min("sunshine").over(w)).filter("maxSunshine=sunshine or minSunshine=sunshine")
-      df2.show()
-    }
-  }
-
-
+  // Solution for problem 5 collects all may metrics
   def yearWiseMetrics(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig) = {
     var itrDf = df.select("country").distinct()
     List("avg","min","max").foreach( agg =>
@@ -196,6 +126,6 @@ object analytics {
 
     }
     ))
-    itrDf.show
+    itrDf.toDF()
   }
 }

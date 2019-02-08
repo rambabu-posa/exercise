@@ -1,6 +1,9 @@
 package com.jpm.test.util
 
-import com.jpm.test.Jpmo.{defaults, ignoreSymbols, schemaConf}
+import java.io.{File, FileOutputStream}
+
+import com.jpm.test.Jpmo.{defaults, ignoreSymbols, schemaConf, printOption}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType}
 
 object jpm_test_utils {
@@ -26,6 +29,9 @@ object jpm_test_utils {
     val rowData = line.split("\\s+")
     var returnData = List[Any](rowData(0))
     var columnNumber = 1
+    if(line.contains("Whitby")){
+      val abc =1
+    }
     val ignoreSymbolsMap = Map(ignoreSymbols map((_,"")):_*)
     schemaConf.map(x=> {
       x(1) match {
@@ -42,10 +48,31 @@ object jpm_test_utils {
     returnData
   }
 
-  def filterInValidData(line:String) : Boolean = {
+  def filterInValidData(line:String,country: String) : Boolean = {
     if(line == "" ) return false
-    line.split("\\s")(0) matches """\d+"""
+    if( line.split("\\s")(0) matches """\d+""")
+
+    if(line.split("\\s+").length < schemaConf.length) {
+      println(s"ignoring $line from $country")
+      false
+    } else
+      true
+    else
+      false
   }
 
+  implicit class PrintClass(df: DataFrame) {
+    def printData(fileName: String) = printOption match {
+      case "file" =>
+        val fos = new FileOutputStream(new File(fileName))
+        Console.withOut(fos) {
+          df.show(1000)
+        }
+      case "Folder" =>
+        df.rdd.saveAsTextFile(fileName)
+      case _ =>
+        df.show(1000)
+    }
+  }
 
 }
