@@ -21,7 +21,7 @@ class UtilTest  extends FlatSpec with Matchers with BaseSparkTest{
 
   "getDouble " should " return the expected double value" in {
 
-    val result = JpmTestUtils.getInt("10.5*",Map("*"->""))
+    val result = JpmTestUtils.getDouble("10.5*",Map("*"->""))
     val expected =  10.5
     result.equals(expected)
   }

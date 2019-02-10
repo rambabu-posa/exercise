@@ -3,15 +3,11 @@ package com.jpm.test
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import com.jpm.test.util.JpmTestUtils.getDefault
 
 object Analytics {
 
 
-  def getDefault(colType:String,defaults:DefaultsConfig ) = colType match {
-    case  "Int" => defaults.int
-    case "Double" => defaults.float
-    case _ => defaults.string
-  }
   // helps to rank stations online by number of measures.
   private def checkOnline(row:Row,schemaConf: List[List[String]],defaults:DefaultsConfig ) ={
     var metricsCount = 0
@@ -92,6 +88,7 @@ object Analytics {
     df.filter(s"sunshine!=${defaults.float}")
       .groupBy("country").agg(avg("sunshine").alias("avgSunshine"))
       .withColumn("rank", row_number().over(Window.partitionBy().orderBy($"avgSunshine".desc)))
+      .select("rank","country","avgSunshine")
   }
 
   // Solution for problem 4 with respect to high rain
@@ -105,7 +102,7 @@ object Analytics {
   }
 
   // Solution for problem 5 collects all may metrics
-  def yearWiseMetrics(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig) = {
+  def aggMetrics(df:DataFrame,schemaConf: List[List[String]],defaults:DefaultsConfig) = {
     var itrDf = df.select("country").distinct()
     List("avg","min","max").foreach( agg =>
     (2 until schemaConf.length).map(index => {
@@ -125,6 +122,6 @@ object Analytics {
 
     }
     ))
-    itrDf.toDF()
+    itrDf.select(  "country", "tmin_avg_value", "tmax_avg_value", "af_days_avg_value", "rain_avg_value", "sunshine_avg_value", "tmin_min_value", "tmin_min_year", "tmax_min_value", "tmax_min_year", "af_days_min_value", "af_days_min_year", "rain_min_value", "rain_min_year", "sunshine_min_value", "sunshine_min_year", "tmin_max_value", "tmin_max_year", "tmax_max_value", "tmax_max_year", "af_days_max_value", "af_days_max_year", "rain_max_value", "rain_max_year", "sunshine_max_value", "sunshine_max_year").toDF()
   }
 }

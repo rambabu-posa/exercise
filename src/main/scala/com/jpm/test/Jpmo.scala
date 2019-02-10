@@ -51,7 +51,7 @@ object Jpmo extends App {
   Analytics.rankStationsBySunshine(df,defaults).printData("rankStationsBySunshine")
   Analytics.worstRainfall(df,defaults).printData("worstRainfall")
   Analytics.bestSunshine(df,defaults).printData("bestSunshine")
-  Analytics.yearWiseMetrics(df.filter("month=5"),schemaConf,defaults).printData("yearWiseMetrics")
+  Analytics.aggMetrics(df.filter("month=5"),schemaConf,defaults).printData("yearWiseMetrics")
 
 } catch {
   case ex:Exception=>

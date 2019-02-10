@@ -4,6 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.collection.mutable.ListBuffer
 import collection.JavaConversions._
 
+// class to read App configuration
 case class AppConfig(countryConfig: CountryConfig,
                      schemaConf: List[List[String]],
                      ignoredSymbols:List[String],
