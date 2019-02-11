@@ -23,6 +23,7 @@ object Jpmo extends App {
   val spark = SparkSession.builder()
     .appName("JPMC")
     .master("local[1]")
+    .config("spark.sql.broadcastTimeout","3600")
     .getOrCreate()
 
   var df = spark.createDataFrame(spark.sqlContext.sparkContext.emptyRDD[Row], schema)
@@ -51,7 +52,8 @@ object Jpmo extends App {
   Analytics.rankStationsBySunshine(df,defaults).printData("rankStationsBySunshine")
   Analytics.worstRainfall(df,defaults).printData("worstRainfall")
   Analytics.bestSunshine(df,defaults).printData("bestSunshine")
-  Analytics.aggMetrics(df.filter("month=5"),schemaConf,defaults).printData("yearWiseMetrics")
+  Analytics.aggMetrics(df.filter("month=5"),schemaConf,defaults).printData("aggMetrics")
+  spark.stop()
 
 } catch {
   case ex:Exception=>
