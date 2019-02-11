@@ -1,0 +1,42 @@
++----+---------------+------------+
+|rank|        country|metricsCount|
++----+---------------+------------+
+|   1|         armagh|        9965|
+|   2|         oxford|        9965|
+|   3|      stornoway|        8735|
+|   4|    southampton|        8715|
+|   5|         durham|        8345|
+|   6|      sheffield|        8165|
+|   7|       bradford|        6665|
+|   8|    eskdalemuir|        6485|
+|   9|    wickairport|        6305|
+|  10|      lowestoft|        6240|
+|  11|          tiree|        5465|
+|  12|        lerwick|        5290|
+|  13|         valley|        5290|
+|  14|      rossonwye|        5290|
+|  15|          nairn|        5285|
+|  16|      aberporth|        4685|
+|  17|        manston|        4655|
+|  18|       shawbury|        4385|
+|  19|     waddington|        4325|
+|  20|       heathrow|        4265|
+|  21|       chivenor|        3785|
+|  22|           hurn|        3725|
+|  23|       leuchars|        3725|
+|  24|     newtonrigg|        3605|
+|  25|        paisley|        3605|
+|  26|        braemar|        3605|
+|  27|suttonbonington|        3605|
+|  28|      cambridge|        3605|
+|  29|     eastbourne|        3605|
+|  30|        ringway|        3530|
+|  31|   ballypatrick|        3455|
+|  32|      yeovilton|        3265|
+|  33|     cwmystwyth|        3090|
+|  34|   dunstaffnage|        2860|
+|  35|         whitby|        2585|
+|  36|        cardiff|        2485|
+|  37|       camborne|        2425|
++----+---------------+------------+
+

@@ -1,0 +1,42 @@
++---------------+----+-----+-----+
+|        country|year|month|  max|
++---------------+----+-----+-----+
+|         valley|2015|   12|254.2|
+|      stornoway|1898|   12|377.5|
+|          tiree|2015|   12|268.6|
+|     eastbourne|2000|   10|261.1|
+|suttonbonington|1977|    2|176.5|
+|       bradford|2007|    6|261.4|
+|       chivenor|2009|    7|233.0|
+|       leuchars|2004|    8|215.6|
+|   ballypatrick|2008|    8|313.0|
+|     newtonrigg|2015|   12|329.4|
+|   dunstaffnage|2011|   12|417.8|
+|      yeovilton|2002|   11|192.4|
+|        paisley|2006|   12|298.9|
+|         oxford|1875|   10|192.9|
+|       shawbury|1976|    9|174.7|
+|        ringway|2000|   10|193.6|
+|     cwmystwyth|2009|   11|425.4|
+|       camborne|1978|   12|276.7|
+|         whitby|2010|   11|189.0|
+|    southampton|1903|   10|280.7|
+|      aberporth|1954|   11|232.3|
+|           hurn|1960|   10|258.9|
+|         durham|1888|    7|209.7|
+|      rossonwye|1959|   12|186.0|
+|        braemar|2015|   12|316.8|
+|      cambridge|2005|    9|166.2|
+|        cardiff|2000|   10|267.6|
+|    eskdalemuir|2015|   12|568.8|
+|      sheffield|2007|    6|285.6|
+|    wickairport|2006|   10|234.6|
+|        lerwick|2015|    1|302.4|
+|      lowestoft|1939|   10|163.9|
+|          nairn|1995|    9|222.4|
+|         armagh|1870|   10|226.4|
+|       heathrow|1987|   10|174.8|
+|        manston|1939|   10|271.8|
+|     waddington|1956|    8|217.5|
++---------------+----+-----+-----+
+
